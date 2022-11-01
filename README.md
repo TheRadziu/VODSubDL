@@ -4,7 +4,10 @@ Skrypt oryginalnie służył do ściągania napisów z serwisu TVP VOD. Z czasem
 Abonament ABO jest wspierany.
 
 ## Abonament ABO (cookies)
-TODO
+1. Zainstaluj dodatek "Get cookies.txt" - https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid  
+2. Wejdź na strone TVP VOD i się zaloguj. Upewnij się że masz aktywny abonament ABO.  
+3. W "Get cookies.txt" upewnij się że `Get cookies.txt for vod.tvp.pl` jest wyświetlane u góry, po czym kliknij Export poniżej. Zapisz plik `tvp.pl_cookies.txt` w lokacji z VODSubDL.py.  
+4. Gotowe. Przy uruchomieniu skryptu zostanie wyświetlony komunikat czy ciasteczka zostały załadowane poprawnie.
 
 ## Ustawienia
 `subtitleedit = "E:\subtitle edit\SubtitleEdit.exe"` - PATH do programu Subtitle edit (patrz: poniżej)  
@@ -25,4 +28,4 @@ Subtitle Edit (Darmowy, Open Source) - https://github.com/SubtitleEdit/subtitlee
 ## Notki
 1. Jeśli uzywasz innej aplikacji do pobierania plików edytuj linijkę na syntax odpowiadający twojej aplikacji;    
 `subprocess.call([IDM, '/d', mp4_DL, '/p', output_dir, '/f', nazwa_pliku+'.mp4', '/n'])`  
-gdzie: `IDM` - patrz Ustwienia, `mp4_DL` - URL do pliku, `output_dir` - patrz Ustawienia, `nazwa_pliku` - Nazwa pliku bez rozszerzenia
+gdzie: `IDM` - patrz Ustawienia, `mp4_DL` - URL do pliku, `output_dir` - patrz Ustawienia, `nazwa_pliku` - Nazwa pliku bez rozszerzenia
