@@ -1,7 +1,8 @@
-## VODSubDL.py v2.25
+## VODSubDL.py v2.26
 ## Napisane w Python 3.9 przez TheRadziu
 # TODO:
 # - Dodać check i fallback kiedy zdefiniowana rozdzielczość nie jest dostępna
+# - Dodać poprawną detekcję i reakcję na "ERROR: Przekroczono limit jednoczesnych odtworzeń"
 
 ### Settings ###
 subtitleedit = "E:\subtitle edit\SubtitleEdit.exe"
@@ -45,14 +46,15 @@ def decide_resolution(url, Rozdzielczosc):
     "544p" : "6",
     "450p" : "5",
     }
+    urlA = re.match(r"(.*)-(.*).mp4", url)
     if Rozdzielczosc not in tabela_rozdzielczosci:
-        urlA = url[:-5]+tabela_rozdzielczosci['720p']+".mp4"
+        urlB = urlA[1]+"-"+tabela_rozdzielczosci['720p']+".mp4"
         print("OSTRZEŻENIE! Zdefiniowano złą rozdzielczość! Poprawiono na 720p!")
         print(" [720p]")
     else:
-        urlA = url[:-5]+tabela_rozdzielczosci[Rozdzielczosc]+".mp4"
+        urlB = urlA[1]+"-"+tabela_rozdzielczosci[Rozdzielczosc]+".mp4"
         print(" ["+Rozdzielczosc+"]")
-    return urlA
+    return urlB
 
 if DLSubs or DLVideo:
         if os.path.isfile('tvp.pl_cookies.txt'):
@@ -80,7 +82,11 @@ while True:
                 print(' [DRM]\nBŁĄD! Wsparcie dla DRM (Playready, fairplay, widevine) nie jest dostępne.')
                 print('Klucz DRM dla odcinka: '+data['content']['files'][0]['protection']['key'])
             else:
-                mp4_DL = decide_resolution(data['content']['files'][3]['url'], Rozdzielczosc)
+                for wynik in data['content']['files']:
+                    if wynik['url'].endswith('.mp4'):
+                        mp4_url = wynik['url']
+                        break
+                mp4_DL = decide_resolution(mp4_url, Rozdzielczosc)
                 subprocess.call([IDM, '/d', mp4_DL, '/p', output_dir, '/f', nazwa_pliku+'.mp4', '/n'])
                 print("Rozpoczęto pobieranie odcinka za pomocą IDM")
         if DLSubs:
