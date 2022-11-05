@@ -24,6 +24,7 @@ Subtitle Edit (Darmowy, Open Source) - https://github.com/SubtitleEdit/subtitlee
 ## Limity i znane błędy
 - Brak wsparcia dla DRM (materiały od BBC). Ta funkcja raczej nie będzie przeze mnie dodana.  
 - BUG: Ustawienie rozdzielczości wyższej niż maksymalnie dostępna spowoduje wygenerowanie nieprawidłowego URL. (funkcja decide_resolution)
+- BUG: Przy jednoczesnym pobieraniu 3 materiałów ABO na raz, przy próbie pobrania czwartego skrypt błędnie zareaguje tak jakby abonament ABO nie był dostępny ("ERROR: Przekroczono limit jednoczesnych odtworzeń")
 
 ## Notki
 1. Jeśli uzywasz innej aplikacji do pobierania plików edytuj linijkę na syntax odpowiadający twojej aplikacji;    
