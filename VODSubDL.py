@@ -1,4 +1,4 @@
-## VODSubDL.py v2.27
+## VODSubDL.py v2.28
 ## Napisane w Python 3.9 przez TheRadziu
 # TODO:
 # - Dodać poprawną detekcję i reakcję na "ERROR: Przekroczono limit jednoczesnych odtworzeń"
@@ -7,6 +7,7 @@
 subtitleedit = "E:\subtitle edit\SubtitleEdit.exe"
 IDM = "C:\Program Files (x86)\Internet Download Manager\IDMan.exe"
 output_dir = r"E:\Downloads"
+drzewko_folderowe = True
 DLSubs = True
 DLVideo = True
 max_rozdzielczosc = "2160p"
@@ -19,6 +20,7 @@ import urllib.request
 import subprocess
 import re
 import http.client
+import errno
 
 def parseCookieFile(cookiefile):
     cookies = {}
@@ -64,16 +66,25 @@ def decide_resolution(url, Rozdzielczosc):
             break
     return urlB
 
+def mkdir_p(path):
+	try:
+		os.makedirs(path)
+	except OSError as exc:
+		if exc.errno == errno.EEXIST and os.path.isdir(path):
+			pass
+		else: raise
+
 if DLSubs or DLVideo:
-        if os.path.isfile('tvp.pl_cookies.txt'):
-            print("Poprawnie wykryto plik z ciasteczkami TVP")
-            ciastka = parseCookieFile('tvp.pl_cookies.txt')
-        else:
-            print("Nie wykryto ciasteczek TVP. Ściąganie plików ABO zakończy się błędem!")
-            ciastka = None
+    output_dir_set = None
+    if os.path.isfile('tvp.pl_cookies.txt'):
+        print("Poprawnie wykryto plik z ciasteczkami TVP")
+        ciastka = parseCookieFile('tvp.pl_cookies.txt')
+    else:
+        print("Nie wykryto ciasteczek TVP. Ściąganie plików ABO zakończy się błędem!")
+        ciastka = None
 while True:
-    url = input('Podaj URL do odcinka: ')
-    if 'odcinek' in url:
+    url = input('Podaj URL do odcinka lub filmu: ')
+    if 'odcinek' in url or 'filmy' in url:
         vod_url = 'https://vod.tvp.pl/sess/TVPlayer2/api.php?id='+get_real_id(url)+'&@method=getTvpConfig&@callback=callback'
         try: 
             response = requests.get(vod_url, cookies=ciastka)
@@ -81,14 +92,31 @@ while True:
             endidx = response.text.rfind(')')
             data = json.loads(response.text[startidx + 1:endidx])
         except:
-            print("BŁĄD! Materiały ABO wymagają ciasteczka z ważnym abonamentem ABO!")
+            print("BŁĄD! Nie masz dostępu do tego materiału! (sprawdź abonament ABO lub czy masz wykupiony dostęp!)")
             continue
-        nazwa_pliku = (data['content']['info']['title']+' odc. '+str(data['content']['info']['episode']))
+        tytul = re.sub('[^a-zA-zżźćńółęąśŻŹĆĄŚĘŁÓŃ0-9 \n\.]', '', data['content']['info']['title']).lstrip()
+        if 'odcinek' in url:
+            if data['content']['info']['season'] is None or len(re.sub('[^0-9]', '', data['content']['info']['season'])) > 3:
+                nazwa_pliku = (tytul+" odc. "+f"{data['content']['info']['episode']:02d}")
+            else:
+                nazwa_pliku = (tytul+" S"+f"{int(re.sub('[^0-9]', '', data['content']['info']['season'])):02d}"+"E"+f"{data['content']['info']['episode']:02d}")
+        else:
+            nazwa_pliku = tytul
         print("Wybrano: "+nazwa_pliku, end = '')
+        if output_dir_set is None:
+            output_dir_set = output_dir
+        if drzewko_folderowe and 'odcinek' in url:
+            if data['content']['info']['season'] is None or len(re.sub('[^0-9]', '', data['content']['info']['season'])) > 3:
+                output_dir = output_dir_set+"\\"+tytul+"\\Sezon nieznany"
+            else:
+                output_dir = output_dir_set+"\\"+tytul+"\\Sezon "+re.sub('[^0-9]', '', data['content']['info']['season'])
+        elif drzewko_folderowe and 'filmy' in url:
+            output_dir = output_dir_set+"\\"+tytul
+        mkdir_p(output_dir)
         if DLVideo:
             if data['content']['files'][0]['protection']:
                 print(' [DRM]\nBŁĄD! Wsparcie dla DRM (Playready, fairplay, widevine) nie jest dostępne.')
-                print('Klucz DRM dla odcinka: '+data['content']['files'][0]['protection']['key'])
+                print('Klucz DRM dla materiału: '+data['content']['files'][0]['protection']['key'])
             else:
                 for wynik in data['content']['files']:
                     if wynik['url'].endswith('.mp4'):
@@ -96,7 +124,7 @@ while True:
                         break
                 mp4_DL = decide_resolution(mp4_url, max_rozdzielczosc)
                 subprocess.call([IDM, '/d', mp4_DL, '/p', output_dir, '/f', nazwa_pliku+'.mp4', '/n'])
-                print("Rozpoczęto pobieranie odcinka za pomocą IDM")
+                print("Rozpoczęto pobieranie wideo za pomocą IDM")
         if DLSubs:
             subs = re.match(r".*'url': '//(.*).xml'", str(data['content']['subtitles']))
             if DLVideo is False:
@@ -110,7 +138,9 @@ while True:
             except:
                 print("Wystąpił błąd pobierania napisów - prawdopodobnie nie istnieją")
         print("---------")
-    else:
+    elif 'odcinki' in url:
         print('BŁAD! Wymagany link do odcinka, nie do listy odcinków!')
+    else:
+        print('Ten typ materiału nie jest wspierany przez VODSubDL. Zgłoś to autorowi!')
 else:
     print('Funkcjonalnosc VODSubDL wyłączona. Włącz conajmniej jedną funkcję!')
