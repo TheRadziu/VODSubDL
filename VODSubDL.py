@@ -1,16 +1,15 @@
-## VODSubDL.py v2.26
+## VODSubDL.py v2.27
 ## Napisane w Python 3.9 przez TheRadziu
 # TODO:
-# - Dodać check i fallback kiedy zdefiniowana rozdzielczość nie jest dostępna
 # - Dodać poprawną detekcję i reakcję na "ERROR: Przekroczono limit jednoczesnych odtworzeń"
 
 ### Settings ###
 subtitleedit = "E:\subtitle edit\SubtitleEdit.exe"
 IDM = "C:\Program Files (x86)\Internet Download Manager\IDMan.exe"
-output_dir = r"E:\Downloads\Przysięga\wrzucic"
+output_dir = r"E:\Downloads"
 DLSubs = True
 DLVideo = True
-Rozdzielczosc = "1080p"
+max_rozdzielczosc = "2160p"
 ### end of Settings ###
 
 import os
@@ -19,6 +18,7 @@ import requests
 import urllib.request
 import subprocess
 import re
+import http.client
 
 def parseCookieFile(cookiefile):
     cookies = {}
@@ -38,6 +38,11 @@ def get_real_id(url):
     real_id = real_api_json['externalUid']
     return real_id
 
+def check_url(url):
+    urlC = http.client.HTTPConnection(url.split("/", 3)[2])
+    urlC.request("HEAD", "/"+url.split("/", 3)[3])
+    return urlC.getresponse().status
+
 def decide_resolution(url, Rozdzielczosc):
     tabela_rozdzielczosci = {
     "2160p" : "11",
@@ -48,12 +53,15 @@ def decide_resolution(url, Rozdzielczosc):
     }
     urlA = re.match(r"(.*)-(.*).mp4", url)
     if Rozdzielczosc not in tabela_rozdzielczosci:
-        urlB = urlA[1]+"-"+tabela_rozdzielczosci['720p']+".mp4"
-        print("OSTRZEŻENIE! Zdefiniowano złą rozdzielczość! Poprawiono na 720p!")
-        print(" [720p]")
-    else:
-        urlB = urlA[1]+"-"+tabela_rozdzielczosci[Rozdzielczosc]+".mp4"
-        print(" ["+Rozdzielczosc+"]")
+        print("\nOSTRZEŻENIE! Zdefiniowano złą maksymalną rozdzielczość! Wideo zostanie pobrane w najlepszej dostępnej jakości!\nZnaleziono rozdzielczość: ", end = '')
+        Rozdzielczosc = "2160p"
+    urlB = urlA[1]+"-"+tabela_rozdzielczosci[Rozdzielczosc]+".mp4"
+    for i, (k, v) in enumerate(tabela_rozdzielczosci.items()):
+        if i >= list(tabela_rozdzielczosci.keys()).index(Rozdzielczosc):
+          urlB = urlA[1]+"-"+v+".mp4"
+          if check_url(urlB) == 200:
+            print(" ["+k+"]")
+            break
     return urlB
 
 if DLSubs or DLVideo:
@@ -86,7 +94,7 @@ while True:
                     if wynik['url'].endswith('.mp4'):
                         mp4_url = wynik['url']
                         break
-                mp4_DL = decide_resolution(mp4_url, Rozdzielczosc)
+                mp4_DL = decide_resolution(mp4_url, max_rozdzielczosc)
                 subprocess.call([IDM, '/d', mp4_DL, '/p', output_dir, '/f', nazwa_pliku+'.mp4', '/n'])
                 print("Rozpoczęto pobieranie odcinka za pomocą IDM")
         if DLSubs:
