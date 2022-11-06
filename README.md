@@ -13,6 +13,7 @@ Abonament ABO jest wspierany.
 `subtitleedit = "E:\subtitle edit\SubtitleEdit.exe"` - PATH do programu Subtitle edit (patrz: poniżej)  
 `IDM = "C:\Program Files (x86)\Internet Download Manager\IDMan.exe"` - PATH do Internet Download Managera, jeśli uzywasz innej aplikacji patrz notka 1 niżej  
 `output_dir = r"E:\Downloads"` - PATH do folderu do którego mają zostać zapisane video i/lub napisy  
+`drzewko_folderowe = True` - Generuje podfoldery `Tytuł\Sezon X\`
 `DLSubs = True` - Czy pobierać napisy (domyślnie włączone)  
 `DLVideo = True` - Czy pobierać video (domyślnie włączone)  
 `max_rozdzielczosc = "2160p"` - Maksymalna rozdzielczość jaka ma zostać pobrana, dostępne wartości to: 2160p, 1080p, 720p, 544p, 450p.  
@@ -28,7 +29,6 @@ Subtitle Edit (Darmowy, Open Source) - https://github.com/SubtitleEdit/subtitlee
 
 ## Planowane zmiany:
 - Poprawa bugów wspomnianych wyżej.  
-- Dodanie wsparcia dla drzewka folderów (Tytuł -> Sezon X -> Nazwa odc. Y)
 
 ## Notki
 1. Jeśli uzywasz innej aplikacji do pobierania plików edytuj linijkę na syntax odpowiadający twojej aplikacji;    
