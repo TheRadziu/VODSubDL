@@ -1,4 +1,4 @@
-## VODSubDL.py v2.29 (alpha)
+## VODSubDL.py v2.29 (alpha2)
 ## Napisane w Python 3.9 przez TheRadziu
 # TODO:
 # - Dodać poprawną detekcję i reakcję na "ERROR: Przekroczono limit jednoczesnych odtworzeń"
@@ -25,6 +25,7 @@ import re
 import http.client
 import errno
 import time
+import base64
 
 def parseCookieFile(cookiefile):
     cookies = {}
@@ -122,8 +123,17 @@ def download_video(api_response, names):
     output_dir = names[1]
     nazwa_pliku = names[0]
     if api_response['content']['files'][0]['protection']:
-        print(' [DRM]\nBŁĄD! Wsparcie dla DRM (Playready, fairplay, widevine) nie jest dostępne.')
-        print('Klucz DRM dla materiału: '+api_response['content']['files'][0]['protection']['key'])
+        for wynik in api_response['content']['files']:
+            if wynik['url'].endswith('.ism'):
+                print('yt-dlp.exe -o "'+nazwa_pliku+'.mp4" --allow-u \"'+wynik['url']+'?indexMode"')
+                print('License URL: '+str(wynik['protection']['licenseServers'][2]['url']))
+                pssh = input('Wklej PSSH z przeglądarki: ')
+                pssh_bin = base64.b64decode(pssh)
+                pssh_bin_1 = base64.b64encode(pssh_bin[-59:])
+                print ('!!!--------!!!')
+                print('Twój PSSH: '+str(pssh_bin_1))
+                print ('!!!--------!!!')
+                
         pass
     else:
         for wynik in api_response['content']['files']:
@@ -199,10 +209,10 @@ while True:
                         mkdir_p(name_and_dir(url, output_dir, False)[1])
                         if DLVideo:
                             download_video(api_response, name_and_dir(url, output_dir, True))
+                        if DLVideo is False:
+                            print(" [Napisy]")
                         if DLSubs:
                             download_and_convert_subs(url, name_and_dir(url, output_dir, True))
-                            if DLVideo is False:
-                                print(" [Napisy]")
                         time.sleep(spiulkolot)
             continue
         continue
