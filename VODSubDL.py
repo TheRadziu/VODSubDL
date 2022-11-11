@@ -2,8 +2,6 @@
 ## Napisane w Python 3.9 przez TheRadziu
 # TODO:
 # - Dodać poprawną detekcję i reakcję na "ERROR: Przekroczono limit jednoczesnych odtworzeń"
-# - Przepisać to monstrum od całych sezonów
-# - Dodać wsparcie dla ściągania wszystkich sezonów na raz
 
 ### Ustawienia ###
 subtitleedit = "E:\subtitle edit\SubtitleEdit.exe"
