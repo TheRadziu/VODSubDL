@@ -24,7 +24,7 @@ Dokładniejsze wyjasnienie działania ustawienia `max_rozdzielczosc` w notce 2 n
 `ytdlp = r"E:\Downloads\VODSubDL\yt-dlp.exe"` - PATH do programu yt-dlp (patrz: poniżej)  
 `mp4decr = r"E:\Downloads\VODSubDL\mp4decrypt.exe"` - PATH do programu mp4decrypt (patrz: niżej)  
 `ffmpeg_bin = r"E:\Programy\FFMPEG\ffmpeg.exe"` - PATH do programu ffmpeg (patrz:niżej)  
-`wkskey = r"E:\Downloads\VODSubDL\keys"`- PATH do skryptu wsk-key (patrz: niżej)  
+`downey = r"E:\Downloads\VODSubDL\downey.exe"`- PATH do programu downey (patrz: niżej)  
 
 ## Zewnętrzne aplikacje
 Internet Download Manager (Płatny, Darmowy Trial) - https://www.internetdownloadmanager.com/  
@@ -32,7 +32,7 @@ Subtitle Edit (Darmowy, Open Source) - https://github.com/SubtitleEdit/subtitlee
 yt-dlp (Darmowy, Open Source) - https://github.com/yt-dlp/yt-dlp  
 mp4decrypt (Darmowy) - https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-639.x86_64-microsoft-win32.zip  
 ffmpeg (Darmowy, Open Source) - https://ffmpeg.org/download.html  
-wks-key (Darmowy, Open Source) - https://github.com/weapon121/WKS-KEY  
+downey (Darmowy, Open Source) - https://github.com/dengskoloper/downey  
 
 ## Limity i znane błędy
 - Wsparcie dla DRM istnieje, ale wszystkie issues związane z pomocą jak używać będą zamykane bez odpowiedzi.  
