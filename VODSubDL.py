@@ -1,4 +1,4 @@
-## VODSubDL.py v2.30 (Alpha 1)
+## VODSubDL.py v2.31
 ## Napisane w Python 3.9 przez TheRadziu
 # TODO:
 # - Dodać poprawną detekcję i reakcję na "ERROR: Przekroczono limit jednoczesnych odtworzeń"
@@ -18,7 +18,7 @@ spiulkolot = 5
 ytdlp = r"E:\Downloads\VODSubDL\yt-dlp.exe"
 mp4decr = r"E:\Downloads\VODSubDL\mp4decrypt.exe"
 ffmpeg_bin = r"E:\Programy\FFMPEG\ffmpeg.exe"
-wkskey = r"E:\Downloads\VODSubDL\keys"
+downey = r"E:\Downloads\VODSubDL\downey.exe"
 ### koniec ustawień ###
 
 import os
@@ -48,7 +48,7 @@ def parseCookieFile(cookiefile):
                     pass
     return cookies
 
-def get_kid(mpd_url):
+def parse_mpd(mpd_url):
     r = requests.get(url=mpd_url)
     r.raise_for_status()
     xml = xmltodict.parse(r.text)
@@ -56,10 +56,11 @@ def get_kid(mpd_url):
     tracks = mpd['MPD']['Period']['AdaptationSet']
     for video_tracks in tracks:
         if video_tracks['@mimeType'] == 'video/mp4':
+            wysokosc = video_tracks['@maxHeight']
             for t in video_tracks["ContentProtection"]:
                 if t['@schemeIdUri'].lower() == "urn:mpeg:dash:mp4protection:2011":
                     kid = t["@cenc:default_KID"]
-    return kid
+    return kid, wysokosc
 
 def get_real_id(url):
     real_api_response = requests.get('https://vod.tvp.pl/api/products/vods/'+url[-6:]+'?lang=pl&platform=BROWSER')
@@ -123,20 +124,21 @@ def name_and_dir(url, output_dir, batch):
         url = 'odcinek'
     output_dir_set = None
     tytul = re.sub('[^a-zA-zżźćńółęąśŻŹĆĄŚĘŁÓŃ0-9 \n\.]', '', api_response['content']['info']['title']).lstrip()
+    sezon = re.sub('[^0-9]', '', api_response['content']['info']['season'])
     if 'odcinek' in url:
-        if api_response['content']['info']['season'] is None or len(re.sub('[^0-9]', '', api_response['content']['info']['season'])) < 3:
+        if sezon is None or len(sezon) == 0 or len(sezon) > 3:
             nazwa_pliku = (tytul+" odc. "+f"{api_response['content']['info']['episode']:02d}")
         else:
-            nazwa_pliku = (tytul+" S"+f"{int(re.sub('[^0-9]', '', api_response['content']['info']['season'])):02d}"+"E"+f"{api_response['content']['info']['episode']:02d}")
+            nazwa_pliku = (tytul+" S"+f"{int(sezon):02d}"+"E"+f"{api_response['content']['info']['episode']:02d}")
     else:
         nazwa_pliku = tytul
     if output_dir_set is None:
         output_dir_set = output_dir
     if drzewko_folderowe and 'odcinek' in url:
-        if api_response['content']['info']['season'] is None or len(re.sub('[^0-9]', '', api_response['content']['info']['season'])) < 3:
+        if sezon is None or len(sezon) == 0 or len(sezon) > 3:
             output_dir = output_dir_set+"\\"+tytul+"\\Sezon nieznany"
         else:
-            output_dir = output_dir_set+"\\"+tytul+"\\Sezon "+re.sub('[^0-9]', '', api_response['content']['info']['season'])
+            output_dir = output_dir_set+"\\"+tytul+"\\Sezon "+sezon
     elif drzewko_folderowe and 'filmy' in url:
         output_dir = output_dir_set+"\\"+tytul
     return nazwa_pliku, output_dir
@@ -145,19 +147,20 @@ def download_video(api_response, names):
     output_dir = names[1]
     nazwa_pliku = unidecode(names[0])
     if api_response['content']['files'][0]['protection']:
-        print(' [DRM]')
         for wynik in api_response['content']['files']:
             if wynik['url'].endswith('.ism'):
+                mpd = wynik['url']+'?indexMode'
+                license_url = wynik['protection']['licenseServers'][2]['url']
+                rozdzielczosc = parse_mpd(wynik['url'])[1]
+                print(' ['+rozdzielczosc+'p] [DRM]')
                 try:
-                    subprocess.call([ytdlp, '--quiet', '--no-warnings', '--progress', '-N', '16', '--output', nazwa_pliku+'.mp4', '--allow-u', wynik['url']+'?indexMode'])
+                    subprocess.call([ytdlp, '--quiet', '--no-warnings', '--progress', '-N', '16', '--output', nazwa_pliku+'.mp4', '--allow-u', mpd])
                     print('Pomyślnie pobrano odcinek.')
                 except:
                     print('BŁĄD! Pobieranie odcinka nie powiodło się!')
                 try:
-                    sys.path.append(wkskey+"/")
-                    from l3 import WV_Function
                     pssh_enc = widevine.generate_pssh(
-                        [get_kid(wynik['url'])],
+                        [parse_mpd(mpd)[0]],
                         None,
                         None,
                         0,
@@ -165,21 +168,16 @@ def download_video(api_response, names):
                     )
                     pssh_bin_1 = str(base64.b64encode(pssh_enc), "ascii")
                     print('!!!--------!!!')
-                    print('Key ID: '+get_kid(wynik['url']))
-                    print('PSSH: '+str(pssh_bin_1))
-                    print('License URL: '+str(wynik['protection']['licenseServers'][2]['url']))
+                    print('MPD URL: '+mpd)
+                    print('PSSH: '+pssh_bin_1)
+                    print('License URL: '+wynik['protection']['licenseServers'][2]['url'])
                     print('!!!--------!!!')
-                    correct, keys = WV_Function(pssh_bin_1, str(wynik['protection']['licenseServers'][2]['url']))
-                    deckey = keys[0]
-                except:
-                    pssh = input('Wklej PSSH z przeglądarki: ')
-                    pssh_bin = base64.b64decode(pssh)
-                    pssh_bin_1 = base64.b64encode(pssh_bin[-59:])
-                    print('!!!--------!!!')
-                    print('PSSH: '+str(pssh_bin_1))
-                    print('License URL: '+str(wynik['protection']['licenseServers'][2]['url']))
-                    print('!!!--------!!!')
-                    deckey = input('Podaj Klucz DRM: ')
+                except KeyboardInterrupt:
+                    print('Anulowano!')
+                    break
+                except Exception as e:
+                    print(e)
+                    break
                 try:
                     #yt-dlp jest głupie a my nie
                     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
@@ -188,18 +186,21 @@ def download_video(api_response, names):
                                 plik_video = plik
                             elif plik.startswith(nazwa_pliku) and plik.endswith(".m4a"):
                                 plik_audio = plik
-                    subprocess.call([mp4decr, '--key', deckey, plik_video, nazwa_pliku+'.decrypted.mp4'])
-                    subprocess.call([mp4decr, '--key', deckey, plik_audio, nazwa_pliku+'.decrypted.m4a'])
+                    deckey_raw = subprocess.check_output([downey, '--lic-server', license_url, '--pssh', pssh_bin_1])
+                    deckey = re.findall(r"\w{32}:\w{32}", deckey_raw.decode('utf-8'))
+                    subprocess.call([mp4decr, '--key', deckey[0], plik_video, nazwa_pliku+'.decrypted.mp4'])
+                    subprocess.call([mp4decr, '--key', deckey[0], plik_audio, nazwa_pliku+'.decrypted.m4a'])
                     subprocess.call([ffmpeg_bin, '-hide_banner', '-v', 'fatal', '-nostats', '-i', nazwa_pliku+'.decrypted.mp4', '-i', nazwa_pliku+'.decrypted.m4a', '-vcodec', 'copy', '-acodec', 'copy', nazwa_pliku+'.mp4'])
                     os.remove(plik_video)
                     os.remove(plik_audio)
                     os.remove(nazwa_pliku+'.decrypted.mp4')
                     os.remove(nazwa_pliku+'.decrypted.m4a')
+                    time.sleep(2)
                     os.replace(nazwa_pliku+'.mp4', output_dir+'/'+nazwa_pliku+'.mp4')
-                    print('Pomyślnie rozszyfrowano odcinek')
-                except:
-                    print('BŁĄD! Rozszyfrowywanie odcinka nie powiodło się! Sprawdz klucz!')
-                print("---------")
+                    print('Pomyślnie rozszyfrowano materiał.')
+                except Exception as e:
+                    print('BŁĄD! Rozszyfrowywanie materiału nie powiodło się!')
+                    print(e)
         pass
     else:
         for wynik in api_response['content']['files']:
@@ -209,6 +210,7 @@ def download_video(api_response, names):
         mp4_DL = decide_resolution(mp4_url, max_rozdzielczosc)
         subprocess.call([IDM, '/d', mp4_DL, '/p', output_dir, '/f', nazwa_pliku+'.mp4', '/n'])
         print("Rozpoczęto pobieranie wideo za pomocą IDM")
+    print("---------")
 
 def download_and_convert_subs(url, names):
     output_dir = names[1]
@@ -222,6 +224,7 @@ def download_and_convert_subs(url, names):
         print("Zapisano napisy jako .SRT i usunięto .XML")
     except:
         print("Wystąpił błąd pobierania napisów - prawdopodobnie nie istnieją")
+    print("---------")
 
 def mkdir_p(path):
 	try:
@@ -262,7 +265,20 @@ while True:
         wybor = int(wybor)
         if wybor == 0:
             print('wybrano wszystkie dostępne sezony!')
-            print('TODO')
+            for i, (k, v) in enumerate(lista_sezonow.items()):
+                num = 0
+                for real_id_episode in get_episode_ids(url, v):
+                    api_response = single_vid_api(real_id_episode)
+                    num +=1
+                    print("Wybrano: "+name_and_dir(url, output_dir, True)[0]+" ("+str(num)+"/"+str(len(get_episode_ids(url, v)))+")", end = '')
+                    mkdir_p(name_and_dir(url, output_dir, True)[1])
+                    if DLVideo:
+                        download_video(api_response, name_and_dir(url, output_dir, True))
+                    if DLVideo is False:
+                        print(" [Napisy]")
+                    if DLSubs:
+                        download_and_convert_subs(url, name_and_dir(url, output_dir, True))
+                    time.sleep(spiulkolot)
             break
         else:
             for i, (k, v) in enumerate(lista_sezonow.items()):
@@ -290,6 +306,5 @@ while True:
         if DLVideo is False:
             print(" [Napisy]")
         download_and_convert_subs(url,name_and_dir(url, output_dir, False))
-    print("---------")
 else:
     print('Funkcjonalnosc VODSubDL wyłączona. Włącz conajmniej jedną funkcję!')
