@@ -20,7 +20,7 @@ Abonament ABO jest wspierany.
 Dokładniejsze wyjasnienie działania ustawienia `max_rozdzielczosc` w notce 2 niżej.  
 `spiulkolot = 5` - W trybie całej serii, czas w sekundach jaki ma skrypt odczekać przed rozpoczęciem pobierania kolejnego odcinka.  
 **DRM**  
- Wszystkie czynności związane z obsługą materiałów DRM wymagają prawidłowo skonfigurowanego(headers.py + WŁASNE działające CDM) i lekko zmodyfikowanego skryptu WSK-KEY (wykomentowanie kilku linijek w l3.py).  
+ Wszystkie czynności związane z obsługą materiałów DRM wymagają __WŁASNEGO__ CDM L3.  
 `ytdlp = r"E:\Downloads\VODSubDL\yt-dlp.exe"` - PATH do programu yt-dlp (patrz: poniżej)  
 `mp4decr = r"E:\Downloads\VODSubDL\mp4decrypt.exe"` - PATH do programu mp4decrypt (patrz: niżej)  
 `ffmpeg_bin = r"E:\Programy\FFMPEG\ffmpeg.exe"` - PATH do programu ffmpeg (patrz:niżej)  
@@ -36,6 +36,7 @@ downey (Darmowy, Open Source) - https://github.com/dengskoloper/downey
 
 ## Limity i znane błędy
 - Wsparcie dla DRM istnieje, ale wszystkie issues związane z pomocą jak używać będą zamykane bez odpowiedzi.  
+- Przy pobieraniu materiałów DRM będzie pobierana najwyższa dostępna rozdzielczość, nie mam w planach tego zmieniać.  
 - BUG: Przy jednoczesnym pobieraniu 3 materiałów ABO na raz, przy próbie pobrania czwartego skrypt błędnie zareaguje tak jakby abonament ABO nie był dostępny (Powód: "ERROR: Przekroczono limit jednoczesnych odtworzeń")  
 
 ## Planowane zmiany:
