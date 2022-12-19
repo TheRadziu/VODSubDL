@@ -38,9 +38,12 @@ downey (Darmowy, Open Source) - https://github.com/dengskoloper/downey
 - Wsparcie dla DRM istnieje, ale wszystkie issues związane z pomocą jak używać będą zamykane bez odpowiedzi.  
 - Przy pobieraniu materiałów DRM będzie pobierana najwyższa dostępna rozdzielczość, nie mam w planach tego zmieniać.  
 - BUG: Przy jednoczesnym pobieraniu 3 materiałów ABO na raz, przy próbie pobrania czwartego skrypt błędnie zareaguje tak jakby abonament ABO nie był dostępny (Powód: "ERROR: Przekroczono limit jednoczesnych odtworzeń")  
+- BUG: Prapremiery używają teraz streamu DASH bez DRM zamiast .MP4, skrypt na razie tego nie wspiera  
 
 ## Planowane zmiany:
-- Poprawa bugów wspomnianych wyżej.  
+- Poprawa bugów wspomnianych wyżej,  
+- Zamiana IDM na Aria2C,  
+- Wrzucenie wszystkich open source binarek na repo,  
 
 ## Notki
 1. Jeśli uzywasz innej aplikacji do pobierania plików edytuj linijkę na syntax odpowiadający twojej aplikacji;    
